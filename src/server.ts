@@ -1,4 +1,4 @@
-import express, { Express,Response } from 'express';
+import express, { Express,Response,Request } from 'express';
 import UserRouter from './routes/user.routes';
 import MoviesRouter from './routes/movies.routes';
 import morgan from 'morgan';
@@ -25,9 +25,9 @@ app.use(fileUpload({
 app.use('/user', UserRouter); // Use the user router at the /user route
 app.use('/movies', MoviesRouter); // Use the movies router at the /movies route
 app.use("/genres" ,GenreRouter); // Use the genre router at the /genres route
-app.get("/", (res: Response) => {
-    res.status(200).json({message: "Welcome to the API world"})
-  })
+app.get("/", (req:Request,res:Response)=>{
+    res.status(200).json({message: "Welcome to the API World"})
+})
     app.use(errorHandler); // Middleware for handling errors
 
 export default app;
