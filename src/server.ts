@@ -26,9 +26,9 @@ app.use(errorHandler); // Middleware for handling errors
 app.use('/user', UserRouter); // Use the user router at the /user route
 app.use('/movies', MoviesRouter); // Use the movies router at the /movies route
 app.use("/genres" ,GenreRouter); // Use the genre router at the /genres route
-app.use(errorHandler);
 app.get("/", (res: Response) => {
     res.status(200).json({message: "Welcome to the API world"})
   })
+app.use(errorHandler);
 
 export default app;
