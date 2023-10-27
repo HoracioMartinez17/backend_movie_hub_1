@@ -20,7 +20,6 @@ app.use(fileUpload({
     useTempFiles: true,
     tempFileDir: "./uploads"
 }));
-app.use(errorHandler); // Middleware for handling errors
 
 // Configure routes
 app.use('/user', UserRouter); // Use the user router at the /user route
@@ -29,6 +28,6 @@ app.use("/genres" ,GenreRouter); // Use the genre router at the /genres route
 app.get("/", (res: Response) => {
     res.status(200).json({message: "Welcome to the API world"})
   })
-app.use(errorHandler);
+    app.use(errorHandler); // Middleware for handling errors
 
 export default app;
