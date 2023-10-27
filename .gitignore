@@ -1,0 +1,45 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# TypeScript
+*.js
+*.js.map
+*.d.ts
+
+# Editor specific
+.vscode/
+
+# Environment variables
+.env*
+
+# Build output
+/dist/
+
+# Logs
+logs/
+*.log
+
+# Compiled binary addons
+/build/Release/
+
+# Dependency directories
+.sass-cache/
+bower_components/
+
+# IDE-specific files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
