@@ -9,10 +9,12 @@ type EnvironmentConfig = {
     app: appConfig;
     auth0: auth0Config;
     cloudinary: cloudinaryConfig;
+
 }
 
 type appConfig = {
     PORT: string | number; // Port on which the application will run
+    ORIGIN: string | undefined
 }
 
 type auth0Config = {
@@ -41,7 +43,8 @@ const ENV = process.env.NODE_ENV ?? 'development';
 const CONFIG: TConfig = {
     development: {
         app: {
-            PORT: process.env.PORT || 4001 // Port for development
+            PORT: process.env.PORT || 4001,
+            ORIGIN: process.env.APP_ORIGIN
         },
         auth0: {
             client_origin: process.env.APP_ORIGIN,
@@ -56,7 +59,8 @@ const CONFIG: TConfig = {
     },
     production: {
         app: {
-            PORT: process.env.PORT || 4002 // Port for production
+            PORT: process.env.PORT || 4001,
+            ORIGIN: process.env.APP_ORIGIN
         },
         auth0: {
             client_origin: process.env.APP_ORIGIN,
