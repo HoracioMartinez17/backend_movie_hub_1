@@ -1,84 +1,62 @@
 import { Request, Response } from 'express';
-import {prismaClient} from '../db/clientPrisma';
+import { prismaClient } from '../db/clientPrisma';
 import { uploadImage } from '../utils/cloudinary';
 import fs from 'fs-extra';
 
 
 // Controller to create a new movie
 export const createMovie = async (req: Request, res: Response) => {
-    let { title, year, description, language, genre } = req.body;
+    let { title, year, description, language, genre, image } = req.body;
     const { userId } = req.params;
 
-    let secure_url_image: string = '';
-    let public_id_image: string = '';
 
     try {
-        const uploadedImage = req.files?.image;
-
-        // Check if uploadedImage exists and is not an array
-        if (uploadedImage === undefined || Array.isArray(uploadedImage)) {
-            console.log('Invalid or missing image');
-            return res.status(400).json('Invalid or missing image');
+        if (!image) {
+            return res.status(400).json({ error: "Image is missing" });
         }
 
-        // Check if 'tempFilePath' is present in uploadedImage
-        if (!('tempFilePath' in uploadedImage)) {
-            console.log('Missing tempFilePath');
-            return res.status(400).send('Missing tempFilePath');
+        if (image) {
+            const upload = await uploadImage(image);
+            // Delete the temporary file
+            // await fs.unlink(uploadedImage.tempFilePath);
+
+            // Create a new instance of the movie with the provided data
+            const newMovie = await prismaClient.movies.create({
+                data: {
+                    title,
+                    year,
+                    description,
+                    language,
+                    genre: {
+                        connect: { id: genre },
+                    },
+                    User: {
+                        connect: {
+                            id: userId,
+                        },
+                    },
+                    imageUrl: upload.secure_url,
+                    imageId: upload.public_id,
+                },
+                select: {
+                    title: true,
+                    year: true,
+                    description: true,
+                    language: true,
+                    imageUrl: true,
+                    imageId: true,
+                    genre: {
+                        select: {
+                            id: true,
+                            name: true,
+                        },
+                    },
+                },
+            });
+            // Send the saved movie as a response
+            res.status(201).send({ status: 'success', message: 'Movie created successfully', newMovie });
         }
 
-        // Upload the image to Cloudinary
-        const image = await uploadImage(uploadedImage.tempFilePath);
-        public_id_image = image.public_id;
-        secure_url_image = image.secure_url;
-
-        // Delete the temporary file
-        await fs.unlink(uploadedImage.tempFilePath);
-
-        // Create a new instance of the movie with the provided data
-        const newMovie = await prismaClient.movies.create({
-            data: {
-                title,
-                year,
-                description,
-                language,
-                image: {
-                    create: {
-                        public_id: public_id_image,
-                        secure_url: secure_url_image,
-                    },
-                },
-                genre: {
-                    connect: { id: genre },
-                },
-                User: {
-                    connect: {
-                        id:userId ,
-                    },
-                },
-            },
-            select: {
-                title: true,
-                year: true,
-                description: true,
-                language: true,
-                image: {
-                    select: {
-                        public_id: true,
-                        secure_url: true,
-                    },
-                },
-                genre: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
-            },
-        });
-
-        // Send the saved movie as a response
-        res.status(201).send({ status: 'success', message: 'Movie created successfully', newMovie });
     } catch (err) {
         console.error(err);
         res.status(500).send({ error: 'Internal server error' });
@@ -88,12 +66,12 @@ export const createMovie = async (req: Request, res: Response) => {
 // Controller to update movies with an image
 export const updateMovieWithImage = async (req: Request, res: Response) => {
     const { movieId } = req.params;
-    const { title, description, language, year, genre } = req.body;
+    const { title, description, language, year, genre, image } = req.body;
 
     try {
         // Get the existing movie by its ID
         const existingMovie = await prismaClient.movies.findUnique({
-            where: { id: movieId  },
+            where: { id: movieId },
         });
 
         // If the movie was not found, return a 404 error
@@ -124,47 +102,28 @@ export const updateMovieWithImage = async (req: Request, res: Response) => {
             updatedData.genre = { connect: { id: genre } };
         }
 
+        if (image !== undefined) {
+            const upload = await uploadImage(image);
+            // await fs.unlink((req.files as any).image.tempFilePath);
+            updatedData.imageId = upload.public_id;
+            updatedData.imageUrl = upload.secure_url;
+        }
+
         // Update the movie with the provided fields
         const updatedMovie = await prismaClient.movies.update({
-            where: { id: movieId  },
+            where: { id: movieId },
             data: updatedData,
         });
 
-        // Load the new image (if provided) and update the image reference in the database
-        const uploadedImage = req.files?.image;
-        if (uploadedImage && 'tempFilePath' in uploadedImage) {
-            try {
-                // Upload the new image
-                const posterImage = await uploadImage(uploadedImage.tempFilePath);
-
-                // Update the image reference in the database
-                await prismaClient.movies.update({
-                    where: { id: movieId },
-                    data: {
-                        image: {
-                            update: {
-                                public_id: posterImage.public_id,
-                                secure_url: posterImage.secure_url,
-                            },
-                        },
-                    },
-                });
-
-                // Delete the temporary file of the new image
-                await fs.unlink(uploadedImage.tempFilePath);
-            } catch (error) {
-                return res.status(500).json({ error: 'Upload error' });
-            }
-        }
+        res.status(200).send({ status: 'success', message: 'Movie updated successfully', updatedMovie });
 
         // Return a 200 response indicating a successful update
-        res.status(200).send({ status: 'success', message: 'Movie updated successfully', updatedMovie });
     } catch (err) {
         console.error(err); // Log the error to the console for debugging purposes
         // In case of an internal error, return an error message with status code 500
         res.status(500).send({ error: 'Internal server error' });
-    }
-};
+    };
+}
 
 
 
@@ -175,14 +134,15 @@ export const getMoviesByMovieId = async (req: Request, res: Response) => {
     try {
         // Find the movie in the database by its ID
         const movie = await prismaClient.movies.findUnique({
-            where: {id: movieId  },
+            where: { id: movieId },
             select: {
                 id: true,
                 title: true,
                 year: true,
                 language: true,
                 description: true,
-                image: true,
+                imageUrl: true,
+                imageId: true,
                 genre: {
                     select: {
                         name: true,
@@ -222,7 +182,8 @@ export const getAllMovies = async (req: Request, res: Response) => {
                 year: true,
                 description: true,
                 language: true,
-                image: true,
+                imageUrl: true,
+                imageId: true,
                 genre: true,
             },
         });
@@ -257,7 +218,7 @@ export const deleteMovie = async (req: Request, res: Response) => {
 
     try {
         // Find the movie by its ID and delete it
-        const deletedMovie = await prismaClient.movies.delete({ where:{ id:movieId} });
+        const deletedMovie = await prismaClient.movies.delete({ where: { id: movieId } });
 
         // Check if the movie was deleted
         if (!deletedMovie) {
@@ -281,4 +242,4 @@ export const deleteMovie = async (req: Request, res: Response) => {
 //     "language": "Movie Language",
 //     "image": "Image URL",
 //     "genre": "ID of the genre to which you want to relate the movie"
-// }
+//

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import {prismaClient} from "../db/clientPrisma";
+import { prismaClient } from "../db/clientPrisma";
 
 
 // Create a new genre
@@ -36,7 +36,7 @@ export const getMoviesByGenreAndUser = async (req: Request, res: Response) => {
             where: { name: genreName },
             include: {
                 movies: {
-                    where: { userId},
+                    where: { userId },
                     skip: skip,
                     take: pageSize,
                     include: {
@@ -45,12 +45,7 @@ export const getMoviesByGenreAndUser = async (req: Request, res: Response) => {
                                 name: true
                             }
                         },
-                        image: {
-                            select: {
-                                secure_url: true,
-                                public_id: true
-                            }
-                        }
+
                     }
                 }
             }
@@ -95,7 +90,8 @@ export const getAllGenres = async (req: Request, res: Response) => {
                         year: true,
                         language: true,
                         description: true,
-                        image: true,
+                        imageUrl: true,
+                        imageId: true,
                     }
                 }
             }
@@ -116,7 +112,7 @@ export const updateGenre = async (req: Request, res: Response) => {
     try {
         // Find the genre by its ID and update its name
         const updatedGenre = await prismaClient.genres.update({
-            where: { id:  id },
+            where: { id: id },
             data: { name }
         });
 

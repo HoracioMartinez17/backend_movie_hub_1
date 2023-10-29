@@ -10,9 +10,9 @@ cloudinary.config({
 });
 
 
-export async function uploadImage(filePath: string) {
+export async function uploadImage(imageData:string) {
     try {
-      const result = await cloudinary.uploader.upload(filePath, {
+      const result = await cloudinary.uploader.upload(imageData, {
         folder: 'movieImage'
       });
 

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import {prismaClient} from '../db/clientPrisma'; // Import the user model
+import { prismaClient } from '../db/clientPrisma'; // Import the user model
 
 
 // Controller to create a new user
@@ -33,7 +33,8 @@ export const createUsers = async (req: Request, res: Response) => {
                         year: true,
                         language: true,
                         description: true,
-                        image: true,
+                        imageUrl: true,
+                        imageId: true,
                         genre: {
                             select: {
                                 id: true,
@@ -56,7 +57,8 @@ export const createUsers = async (req: Request, res: Response) => {
                             year: true,
                             language: true,
                             description: true,
-                            image: true,
+                            imageUrl: true,
+                            imageId: true,
                             genre: {
                                 select: {
                                     id: true,
@@ -85,7 +87,7 @@ export const getUserById = async (req: Request, res: Response) => {
     try {
         // Find the user by their ID and populate their "movies" field with movie documents
         const user = await prismaClient.user.findUnique({
-            where: { id:userId },
+            where: { id: userId },
             include: {
                 movies: {
                     select: {
@@ -94,7 +96,8 @@ export const getUserById = async (req: Request, res: Response) => {
                         year: true,
                         language: true,
                         description: true,
-                        image: true,
+                        imageUrl: true,
+                        imageId: true,
                         genre: {
                             select: {
                                 id: true,
@@ -149,7 +152,7 @@ export const updateUsers = async (req: Request, res: Response) => {
     try {
         // Update the user by their ID and return the updated user
         const userUpdate = await prismaClient.user.update({
-            where: {id:userId },
+            where: { id: userId },
             data: { name, email },
         });
 
@@ -174,7 +177,7 @@ export const deleteUsers = async (req: Request, res: Response) => {
     const { userId } = req.params;
     try {
         // Delete the user by their ID
-        const userDelete = await prismaClient.user.delete({ where: {id:userId } });
+        const userDelete = await prismaClient.user.delete({ where: { id: userId } });
 
         // No user was found for deletion, but the deletion is considered successful
         if (!userDelete) {
